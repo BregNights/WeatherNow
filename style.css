@@ -39,7 +39,7 @@ body {
     width: 80%;
     font-size: 24px;
     font-weight: 500;
-    text-transform: uppercase;
+    text-transform: capitalize;
     padding-left: 32px;
 }
 
@@ -171,7 +171,7 @@ body {
     opacity: 0;
 }
 
-.fade-in {
+.fadeIn {
     animation: 0.5s fadeIn forwards;
     animation-delay: 0.5s;
 }
