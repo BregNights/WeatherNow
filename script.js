@@ -4,76 +4,82 @@ const weatherBox = document.querySelector('.weather-box')
 const weatherDetails = document.querySelector('.weather-details')
 const error404 = document.querySelector('.not-found')
 
+async function callAPI (city) {
+    try {
+        const APIKey = '2840a64a04cf0b26316124aaeb221815'
+        const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${APIKey}`)
+        const data = await response.json()
 
-search.addEventListener('click', async function () {
-    const APIKey = '2840a64a04cf0b26316124aaeb221815'
-    const city = document.querySelector('.search-box input').value
+        if (response.status === 404 || data.cod === "404"){
+            console.error('Cidade não encontrada:', data)
+            showError()
+            return null
+        }
 
-    if (city === '') {
-        return
+        if (!response.ok) {
+            console.error('Erro ao buscar a API:', data)
+            return null
+        }
+
+        return data
+    } catch(error) {
+        console.error('Erro na consulta da API', error)
+        return null
     }
+}
 
-    const getAPI = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${APIKey}`)
-    const data = await getAPI.json()
-    
-    if (data.cod === "404"){
-        container.style.height = '400px'
-        weatherBox.style.display = 'none'
-        weatherDetails.style.display = 'none'
-        error404.style.display = 'block'
-        error404.classList.add('fadeIn')
-        throw new Error('Cidade não localizada')
-    }
+function showError() {
+    container.style.height = '400px'
+    weatherBox.style.display = 'none'
+    weatherDetails.style.display = 'none'
+    error404.style.display = 'block'
+    error404.classList.add('fadeIn')
+}
 
-    if (!getAPI.ok) {
-        throw new Error('Erro na consultda da API')
-    }
-
-    error404.style.display = 'none'
-    error404.classList.remove('fadeIn')
-
+function updateWeather(api) {
     const image = document.querySelector('.weather-box img')
     const temperature = document.querySelector('.weather-box .temperature')
     const description = document.querySelector('.weather-box .description')
     const humidity = document.querySelector('.weather-details .humidity span')
     const wind = document.querySelector('.weather-details .wind span')
 
-    switch (data.weather[0].main) {
-        case 'Clear':
-            image.src = 'images/clear.png'
-            break
+    const weatherImages = {
+        Clear: 'images/clear.png',
+        Rain: 'images/rain.png',
+        Snow: 'images/snow.png',
+        Clouds: 'images/cloud.png',
+        Haze: 'images/mist.png'
+    };
 
-        case 'Rain':
-            image.src = 'images/rain.png'
-            break
+    image.src = weatherImages[api.weather[0].main] || '';
 
-        case 'Snow':
-            image.src = 'images/snow.png'
-            break
-
-        case 'Clouds':
-            image.src = 'images/cloud.png'
-            break
-
-        case 'Haze':
-            image.src = 'images/mist.png'
-            break
-
-        default:
-            image.src = ''
-    }
-
-    temperature.innerHTML = `${parseInt(data.main.temp)}<span>°C</span>`
-    description.innerHTML = `${data.weather[0].description}`
-    humidity.innerHTML = `${data.main.humidity}%`
-    wind.innerHTML = `${parseInt(data.wind.speed)}Km/h`
+    temperature.innerHTML = `${parseInt(api.main.temp)}<span>°C</span>`
+    description.innerHTML = `${api.weather[0].description}`
+    humidity.innerHTML = `${api.main.humidity}%`
+    wind.innerHTML = `${parseInt(api.wind.speed)}Km/h`
 
     weatherBox.style.display = ''
     weatherDetails.style.display = ''
     weatherBox.classList.add('fadeIn')
     weatherDetails.classList.add('fadeIn')
     container.style.height = '590px'
-        
+}
+
+search.addEventListener('click', async function () {
+    const city = document.querySelector('.search-box input').value.trim()
+
+    if (city === '') {
+        return
+    }
+
+    const API = await callAPI(city)
+    
+    if (API) {
+        error404.style.display = 'none'
+        error404.classList.remove('fadeIn')
+
+        updateWeather(API)
+    }  
 })
 
 document.querySelector('.search-box input').addEventListener('keydown', (event) => {
